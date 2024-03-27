@@ -23,7 +23,7 @@ is going in to deep-sleep, as below, between normal uplinks.
   #pragma error ("This is not the example your device is looking for - ESP32 only")
 #endif
 
-// ##### Load the ESP32 preferences facilites
+// ##### load the ESP32 preferences facilites
 #include <Preferences.h>
 Preferences store;
 
@@ -32,13 +32,13 @@ Preferences store;
 
 #include <RadioLib.h>
 
-// Utilities & vars to support ESP32 deep-sleep. The RTC_DATA_ATTR attribute
+// utilities & vars to support ESP32 deep-sleep. The RTC_DATA_ATTR attribute
 // puts these in to the RTC memory which is preserved during deep-sleep
 RTC_DATA_ATTR uint16_t bootCount = 1;
 RTC_DATA_ATTR uint16_t bootCountSinceUnsuccessfulJoin = 0;
 RTC_DATA_ATTR uint8_t LWsession[RADIOLIB_LORAWAN_SESSION_BUF_SIZE];
 
-// Abbreviated version from the Arduino-ESP32 package, see
+// abbreviated version from the Arduino-ESP32 package, see
 // https://espressif-docs.readthedocs-hosted.com/projects/arduino-esp32/en/latest/api/deepsleep.html
 // for the complete set of options
 void print_wakeup_reason() {
@@ -54,16 +54,16 @@ void print_wakeup_reason() {
   Serial.println(bootCount++);
 }
 
-// Put device in to lowest power deep-sleep mode
+// put device in to lowest power deep-sleep mode
 void gotoSleep(uint32_t seconds) {
-  esp_sleep_enable_timer_wakeup(seconds * 1000UL * 1000UL); // Function uses uS
+  esp_sleep_enable_timer_wakeup(seconds * 1000UL * 1000UL); // function uses uS
   Serial.println(F("Sleeping\n"));
   Serial.flush();
 
   esp_deep_sleep_start();
 
-  // If this appears in the serial debug, we didn't go to sleep!
-  // So take defensive action so we don't continually uplink
+  // if this appears in the serial debug, we didn't go to sleep!
+  // so take defensive action so we don't continually uplink
   Serial.println(F("\n\n### Sleep failed, delay of 5 minutes & then restart ###\n"));
   delay(5UL * 60UL * 1000UL);
   ESP.restart();
@@ -71,47 +71,47 @@ void gotoSleep(uint32_t seconds) {
 
 
 
-// Setup & execute all device functions ...
+// setup & execute all device functions ...
 void setup() {
   Serial.begin(115200);
-  while (!Serial);  							// Wait for serial to be initalised
-  delay(2000);  									// Give time to switch to the serial monitor
+  while (!Serial);  							// wait for serial to be initalised
+  delay(2000);  									// give time to switch to the serial monitor
   Serial.println(F("\nSetup"));
   print_wakeup_reason();
 
-  int16_t state = 0;  						// Return value for calls to RadioLib
+  int16_t state = 0;  						// return value for calls to RadioLib
 
-  // Setup the radio based on the pinmap (connections) in config.h
+  // setup the radio based on the pinmap (connections) in config.h
   Serial.println(F("Initalise the radio"));
   state = radio.begin();
   debug(state != RADIOLIB_ERR_NONE, F("Initalise radio failed"), state, true);
 
   Serial.println(F("Recalling LoRaWAN nonces & session"));
-  // ##### Setup the flash storage
+  // ##### setup the flash storage
   store.begin("radiolib");
-  // ##### If we have previously saved nonces, restore them
+  // ##### if we have previously saved nonces, restore them
   if (store.isKey("nonces")) {
-    uint8_t buffer[RADIOLIB_LORAWAN_NONCES_BUF_SIZE];										// Create somewhere to store nonces
-    store.getBytes("nonces", buffer, RADIOLIB_LORAWAN_NONCES_BUF_SIZE);	// Get them to the store
-    state = node.setBufferNonces(buffer); 															// Send them to LoRaWAN
+    uint8_t buffer[RADIOLIB_LORAWAN_NONCES_BUF_SIZE];										// create somewhere to store nonces
+    store.getBytes("nonces", buffer, RADIOLIB_LORAWAN_NONCES_BUF_SIZE);	// get them to the store
+    state = node.setBufferNonces(buffer); 															// send them to LoRaWAN
     debug(state != RADIOLIB_ERR_NONE, F("Restoring nonces buffer failed"), state, false);
   }
 
-  // Recall session from RTC deep-sleep preserved variable
-  state = node.setBufferSession(LWsession); // Send them to LoRaWAN stack
-  // If we have booted at least once we should have a session to restore, so report any failure
-  // Otherwise no point saying there's been a failure when it was bound to fail with an empty 
+  // recall session from RTC deep-sleep preserved variable
+  state = node.setBufferSession(LWsession); // send them to LoRaWAN stack
+  // if we have booted at least once we should have a session to restore, so report any failure
+  // otherwise no point saying there's been a failure when it was bound to fail with an empty 
   // LWsession var. At this point, bootCount has already been incremented, hence the > 2
   debug((state != RADIOLIB_ERR_NONE) && (bootCount > 2), F("Restoring session buffer failed"), state, false);
 
-  // Process the restored session or failing that, create a new one & 
+  // process the restored session or failing that, create a new one & 
   // return flag to indicate a fresh join is required
   Serial.println(F("Setup LoRaWAN session"));
   state = node.beginOTAA(joinEUI, devEUI, nwkKey, appKey, false);
-  // See comment above, no need to report a failure that is bound to occur on first boot
+  // see comment above, no need to report a failure that is bound to occur on first boot
   debug((state != RADIOLIB_ERR_NONE) && (bootCount > 2), F("Restore session failed"), state, false);
 
-  // Loop until successful join
+  // loop until successful join
   while (state != RADIOLIB_ERR_NONE) {
     Serial.println(F("Join ('login') to the LoRaWAN Network"));
     state = node.beginOTAA(joinEUI, devEUI, nwkKey, appKey, true);
@@ -120,9 +120,9 @@ void setup() {
       Serial.print(F("Join failed: "));
       Serial.println(state);
 
-      // How long to wait before join attempts. This is an interim solution pending 
+      // how long to wait before join attempts. This is an interim solution pending 
       // implementation of TS001 LoRaWAN Specification section #7 - this doc applies to v1.0.4 & v1.1
-      // It sleeps for longer & longer durations to give time for any gateway issues to resolve
+      // it sleeps for longer & longer durations to give time for any gateway issues to resolve
       // or whatever is interfering with the device <-> gateway airwaves.
       uint32_t sleepForSeconds = min((bootCountSinceUnsuccessfulJoin++ + 1UL) * 60UL, 3UL * 60UL);
       Serial.print(F("Boots since unsuccessful join: "));
@@ -133,55 +133,55 @@ void setup() {
 
       gotoSleep(sleepForSeconds);
 
-    } else {  // Join was successful
+    } else {  // join was successful
         Serial.println(F("Joined"));
 
-        // ##### Save the join counters (nonces) to permanent store
+        // ##### save the join counters (nonces) to permanent store
         Serial.println(F("Saving nonces to flash"));
-        uint8_t buffer[RADIOLIB_LORAWAN_NONCES_BUF_SIZE]; // Create somewhere to store nonces
-        uint8_t *persist = node.getBufferNonces();  // Get pointer to nonces
-        memcpy(buffer, persist, RADIOLIB_LORAWAN_NONCES_BUF_SIZE);  // Copy in to buffer
-        store.putBytes("nonces", buffer, RADIOLIB_LORAWAN_NONCES_BUF_SIZE); // Send them to the store
+        uint8_t buffer[RADIOLIB_LORAWAN_NONCES_BUF_SIZE];           // create somewhere to store nonces
+        uint8_t *persist = node.getBufferNonces();                  // get pointer to nonces
+        memcpy(buffer, persist, RADIOLIB_LORAWAN_NONCES_BUF_SIZE);  // copy in to buffer
+        store.putBytes("nonces", buffer, RADIOLIB_LORAWAN_NONCES_BUF_SIZE); // send them to the store
 
-        // We'll save the session after the uplink
+        // we'll save the session after the uplink
 
-        // Reset the failed join count
+        // reset the failed join count
         bootCountSinceUnsuccessfulJoin = 0;
 
-        delay(1000);  // Hold off off hitting the airwaves again too soon - an issue in the US
+        delay(1000);  // hold off off hitting the airwaves again too soon - an issue in the US
 
     } // if beginOTAA state
   } // while join
 
-  // ##### Close the store
+  // ##### close the store
   store.end();  
   
 
-  // ----- And now for the main event -----
+  // ----- and now for the main event -----
   Serial.println(F("Sending uplink"));
 
-  // Read some inputs
+  // read some inputs
   uint8_t Digital2 = digitalRead(2);
   uint16_t Analog1 = analogRead(A1);
 
-  // Build payload byte array
+  // build payload byte array
   uint8_t uplinkPayload[3];
   uplinkPayload[0] = Digital2;
-  uplinkPayload[1] = highByte(Analog1);   // See notes for high/lowByte functions
+  uplinkPayload[1] = highByte(Analog1);   // see notes for high/lowByte functions
   uplinkPayload[2] = lowByte(Analog1);
   
-  // Perform an uplink
+  // perform an uplink
   state = node.sendReceive(uplinkPayload, sizeof(uplinkPayload));    
-  debug((state != RADIOLIB_ERR_RX_TIMEOUT) && (state != RADIOLIB_ERR_NONE), F("Error in sendReceive"), state, false);
+  debug((state != RADIOLIB_LORAWAN_NO_DOWNLINK) && (state != RADIOLIB_ERR_NONE), F("Error in sendReceive"), state, false);
 
   Serial.print(F("FcntUp: "));
   Serial.println(node.getFcntUp());
 
-  // Now save session to RTC memory
+  // now save session to RTC memory
   uint8_t *persist = node.getBufferSession();
   memcpy(LWsession, persist, RADIOLIB_LORAWAN_SESSION_BUF_SIZE);
   
-  // Wait until next uplink - observing legal & TTN FUP constraints
+  // wait until next uplink - observing legal & TTN FUP constraints
   gotoSleep(uplinkIntervalSeconds);
 
 }
