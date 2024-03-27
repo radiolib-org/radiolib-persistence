@@ -120,7 +120,7 @@ void debug(bool isFail, const __FlashStringHelper* message, int state, bool Free
 
 // Helper function to display a byte array
 void arrayDump(uint8_t *buffer, uint16_t len) {
-  for (uint16_t c; c < len; c++) {
+  for (uint16_t c = 0; c < len; c++) {
     Serial.printf("%02X", buffer[c]);
   }
   Serial.println();
