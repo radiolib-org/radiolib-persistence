@@ -17,7 +17,7 @@ implications for flash wearing and complications with which parts of the
 session may have changed after an uplink. So it is assumed that the device
 is going in to deep-sleep, as below, between normal uplinks.
 
-This example uses deep sleep mode, so connect GPIO16 and RST
+This example uses deep sleep mode, so connect D0=GPIO16 and RST
 pins before running it.
 
 */
@@ -45,13 +45,14 @@ uint32_t bootCountSinceUnsuccessfulJoin = 0;
 void print_wakeup_reason() {
   Serial.print(F("Wake caused by: "));
   Serial.println(ESP.getResetReason());
-  if(ESP.getResetReason() == "External System") {
-    bootCount = 1;
-    bootCountSinceUnsuccessfulJoin = 0;
+  if(ESP.getResetReason() != "Deep-Sleep Wake") {
+    Serial.println("Initialising RTC RAM to 0");
+    uint8_t rtcMemory[512] = { 0 };
+    if(!ESP.rtcUserMemoryWrite(0, (uint32_t *)&rtcMemory, sizeof(rtcMemory))) {
+      Serial.println("RTC write failed!");
+    }
   }
 
-  Serial.print(F("Boot count: "));
-  Serial.println(bootCount++);
 }
 
 // put device in to lowest power deep-sleep mode
@@ -80,12 +81,14 @@ void gotoSleep(uint32_t seconds) {
 
 
 
-// Setup & execute all device functions ...
+// setup & execute all device functions ...
 void setup() {
   Serial.begin(74880);            // match the bootloader baud rate
   while (!Serial);  							// wait for serial to be initalised
   delay(2000);  									// give time to switch to the serial monitor
   Serial.println(F("\nSetup"));
+
+  print_wakeup_reason();
 
   // restore the bootCount variables from RTC deep-sleep preserved RAM
   uint32_t address = 0;
@@ -99,7 +102,8 @@ void setup() {
   }
   address += sizeof(bootCountSinceUnsuccessfulJoin);  // increment address for next read
 
-  print_wakeup_reason();
+  Serial.print(F("Boot count: "));
+  Serial.println(++bootCount);
 
   int16_t state = 0;  						// return value for calls to RadioLib
 
@@ -207,7 +211,7 @@ void setup() {
 
   // now save session to RTC memory
   uint8_t *persist = node.getBufferSession();
-
+  memcpy(LWsession, persist, RADIOLIB_LORAWAN_SESSION_BUF_SIZE);
   if(!ESP.rtcUserMemoryWrite(address, (uint32_t *)&LWsession, RADIOLIB_LORAWAN_SESSION_BUF_SIZE)) {
     Serial.println("RTC write failed!");
   }
