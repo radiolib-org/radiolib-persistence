@@ -2,10 +2,9 @@
 #define _CONFIG_H
 
 #include <RadioLib.h>
-#include "secrets.h"
 
 // How often to send an uplink - consider legal & FUP constraints - see notes
-const uint32_t uplinkIntervalSeconds = 1UL * 60UL;    // minutes x seconds
+const uint32_t uplinkIntervalSeconds = 5UL * 60UL;    // minutes x seconds
 
 // JoinEUI - previous versions of LoRaWAN called this AppEUI
 // for development purposes you can use all zeros - see wiki for details
