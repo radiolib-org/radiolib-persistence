@@ -86,6 +86,9 @@ void setup() {
   state = radio.begin();
   debug(state != RADIOLIB_ERR_NONE, F("Initalise radio failed"), state, true);
 
+  // Setup the OTAA session information
+  node.beginOTAA(joinEUI, devEUI, nwkKey, appKey);
+
   Serial.println(F("Recalling LoRaWAN nonces & session"));
   // ##### setup the flash storage
   store.begin("radiolib");
@@ -99,24 +102,18 @@ void setup() {
 
   // recall session from RTC deep-sleep preserved variable
   state = node.setBufferSession(LWsession); // send them to LoRaWAN stack
+
   // if we have booted at least once we should have a session to restore, so report any failure
   // otherwise no point saying there's been a failure when it was bound to fail with an empty 
   // LWsession var. At this point, bootCount has already been incremented, hence the > 2
   debug((state != RADIOLIB_ERR_NONE) && (bootCount > 2), F("Restoring session buffer failed"), state, false);
 
-  // process the restored session or failing that, create a new one & 
-  // return flag to indicate a fresh join is required
-  Serial.println(F("Setup LoRaWAN session"));
-  state = node.beginOTAA(joinEUI, devEUI, nwkKey, appKey, false);
-  // see comment above, no need to report a failure that is bound to occur on first boot
-  debug((state != RADIOLIB_ERR_NONE) && (bootCount > 2), F("Restore session failed"), state, false);
-
   // loop until successful join
-  while (state != RADIOLIB_ERR_NONE) {
+  while ((state != RADIOLIB_LORAWAN_NEW_SESSION) &&  (state != RADIOLIB_LORAWAN_SESSION_RESTORED)) {
     Serial.println(F("Join ('login') to the LoRaWAN Network"));
-    state = node.beginOTAA(joinEUI, devEUI, nwkKey, appKey, true);
+    state = node.activateOTAA();
 
-    if (state < RADIOLIB_ERR_NONE) {
+    if ((state != RADIOLIB_LORAWAN_NEW_SESSION) &&  (state != RADIOLIB_LORAWAN_SESSION_RESTORED)) {
       Serial.print(F("Join failed: "));
       Serial.println(state);
 
@@ -154,33 +151,35 @@ void setup() {
   } // while join
 
   // ##### close the store
-  store.end();  
-  
+  store.end();
+
 
   // ----- and now for the main event -----
   Serial.println(F("Sending uplink"));
 
-  // read some inputs
-  uint8_t Digital2 = digitalRead(2);
-  uint16_t Analog1 = analogRead(A1);
+  // This is the place to gather the sensor inputs
+  // Instead of reading any real sensor, we just set some fixed values which can easily be recognized
+  uint8_t value1 = 0x12;
+  uint16_t value2 = 0xBEEF;
 
   // build payload byte array
   uint8_t uplinkPayload[3];
-  uplinkPayload[0] = Digital2;
-  uplinkPayload[1] = highByte(Analog1);   // see notes for high/lowByte functions
-  uplinkPayload[2] = lowByte(Analog1);
-  
+  uplinkPayload[0] = value1;
+  uplinkPayload[1] = highByte(value2);   // See notes for high/lowByte functions
+  uplinkPayload[2] = lowByte(value2);
+
+
   // perform an uplink
   state = node.sendReceive(uplinkPayload, sizeof(uplinkPayload));    
   debug((state != RADIOLIB_LORAWAN_NO_DOWNLINK) && (state != RADIOLIB_ERR_NONE), F("Error in sendReceive"), state, false);
 
   Serial.print(F("FcntUp: "));
-  Serial.println(node.getFcntUp());
+  Serial.println(node.getFCntUp());
 
   // now save session to RTC memory
   uint8_t *persist = node.getBufferSession();
   memcpy(LWsession, persist, RADIOLIB_LORAWAN_SESSION_BUF_SIZE);
-  
+
   // wait until next uplink - observing legal & TTN FUP constraints
   gotoSleep(uplinkIntervalSeconds);
 
