@@ -193,9 +193,9 @@ void setup() {
   
   // perform an uplink
   state = node.sendReceive(uplinkPayload, sizeof(uplinkPayload));    
-  debug((state != RADIOLIB_LORAWAN_NO_DOWNLINK) && (state != RADIOLIB_ERR_NONE), F("Error in sendReceive"), state, false);
+  debug((state < RADIOLIB_ERR_NONE) && (state != RADIOLIB_ERR_NONE), F("Error in sendReceive"), state, false);
 
-  Serial.print(F("FcntUp: "));
+  Serial.print(F("FCntUp: "));
   Serial.println(node.getFCntUp());
 
   // now save session to RTC memory
