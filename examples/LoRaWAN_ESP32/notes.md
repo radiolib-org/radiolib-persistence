@@ -1,10 +1,11 @@
-
+> [!NOTE]
+> These are the notes as included with the original RadioLib LoRaWAN Starter example. We strongly recommend you test that out first.
 
 # RadioLib LoRaWAN on TTN starter script
 
 ## Welcome
 
-These notes are for someone who has successfully created a few sketches for their Arduino based device but is starting out with LoRaWAN. You don't have to be a C coding ninja but some familarity with C and procedural programming is assumed. The absolutely simplest way to get started is to buy some known good hardware that's all done for you so you can concentrate on the code & configuration.
+These notes are for someone who has successfully created a few sketches for their Arduino based device but is starting out with LoRaWAN. You don't have to be a C++ coding ninja but some familarity with C++ and procedural programming is assumed. The absolutely simplest way to get started is to buy some known good hardware that's all done for you so you can concentrate on the code & configuration.
 
 
 ## Introduction
@@ -13,12 +14,12 @@ LoRaWAN is an amazing system for small battery powered sensors collecting data f
 
 These notes plus a lot more are available in the wiki: https://github.com/jgromes/RadioLib/wiki/LoRaWAN
 
-For questions about using RadioLib there is the discussions section (https://github.com/jgromes/RadioLib/discussions) and if you believe you've found an issue (aka bug), the issues section (https://github.com/jgromes/RadioLib/issues). If posting an issue please ensure you tell us what hardware you are using and provide a debug log - please do not use verbose mode unless asked to. If the question is more LoRaWAN or firmware related, then you can use the TTN forum: https://www.thethingsnetwork.org/forum/
+For questions about using RadioLib there is the discussions section (https://github.com/jgromes/RadioLib/discussions) and if you believe you've found an issue (aka bug), the issues section (https://github.com/jgromes/RadioLib/issues). If posting an issue please ensure you tell us what hardware you are using and provide a debug log - make sure you enable `RADIOLIB_DEBUG_PROTOCOL`. If the question is more LoRaWAN or firmware related, then you can use the TTN forum: https://www.thethingsnetwork.org/forum/
 
 
 ## Register & setup on TTN
 
-This sketch isn't particularly aimed at The Things Stack (TTS) but you can get a free Sandbox account and the following instructions are for that. Helium does not support LoRaWAN v1.1 which is the version implemented by RadioLib. Chirpstack & other LoRaWAN Network Server (LNS) stacks have not yet been tried so YMMV.
+This sketch isn't particularly aimed at The Things Stack (TTS) but you can get a free Sandbox account and the following instructions are for that. Chirpstack works just as well, but the buttons and labels may have different names. We discourage the use of Helium as it does not support LoRaWAN v1.1 and has some other odd limitations. Other LoRaWAN Network Servers (LNS) have not been tested by the developers, so YMMV.
 
 Why no screen shots? TTS is a web based app, one that you will need to become familiar with and we will need to direct you to some of the less obvious parts. So much better that you learn the layouts in concept than slavishly follow screen shots that can & will go stale.
 
@@ -28,9 +29,9 @@ There will be some instructions that you have to take on face value. You didn't 
 
 Go to https://www.thethingsnetwork.org/get-started and register - just like any other website. These instructions are for TTS Sandbox.
 
-Once you have confirmed your email address, you can login to the console here: https://console.cloud.thethings.network/. If you allow your browser to share you location the best console will be selected. For most users the best one is the obvious one, if you have any doubts you can ask on the forum here: https://www.thethingsnetwork.org/forum/ - you login with the exact same details.
+Once you have confirmed your email address, you can login to the console here: https://console.cloud.thethings.network/. If you allow your browser to share your location the best console will be selected. For most users the best one is the obvious one, if you have any doubts you can ask on the forum here: https://www.thethingsnetwork.org/forum/ - you login with the exact same details.
 
-It is simpler to register your gateway first. If you don't have a gateway, then a The Things Indoor Gateway (TTIG) is a very affordable option. A gateway gives you a console to see if your device is being heard and is hugely useful when debugging a DIY device. If you are in range of a community gateway you may be lucky with your first device creation but you will never know if you are in range unless you have access to that gateways console.
+It is simpler to register your gateway first. If you don't have a gateway, then a The Things Indoor Gateway (TTIG) is a very affordable option. A gateway gives you a console to see if your device is being heard and is hugely useful when debugging a DIY device. If you are in range of a community gateway you may be lucky with your first device creation but you will never know if you are in range unless you have access to that gateway's console.
 
 You can read up on key concepts and troubleshooting here: https://www.thethingsindustries.com/docs/gateways/
 
@@ -52,13 +53,15 @@ You are making your own device using a third party LoRaWAN stack so there will n
 
 Choose the Frequency plan appropriate for your region. Consider that almost all countries have laws relating to what frequencies you use so don't get creative. For Europe please use the recommended option. For other regions use the entry marked 'used by TTN'.
 
-Choose LoRaWAN 1.1.0 - the last one in the list - the latest specification. RadioLib uses RP001 Regional Parameters 1.1 revision A.
+Choose LoRaWAN 1.1.0 - the last one in the list - the latest specfication. RadioLib uses RP002 Regional Parameters 1.0.4.
 
 At this point you will be asked for your JoinEUI. As this is a DIY device and we are using RadioLib, you can use all zero's as recommended by The LoRa Alliance TR007 Technical Recommendations document. Once you've put in all zeros and clicked confirm you will be asked for a DevEUI, AppKey and NwkKey. It is preferable to have the console generate them so they are properly formatted.
 
-Your End device ID can be changed to make the device more identifiable. Something related to your hardware helps - like devicename-01. The you can click the blue 'Register device'.
+Your End device ID can be changed to make the device more identifiable. Something related to your hardware helps - like `devicename-01`. The you can click the blue 'Register device'.
 
-When many sensors are big deployed, a device is registered, batteries put in, it joins and gets on with sending data for the next few years. For development purposes we need to turn off one of the security settings so that you can join & uplink out of the normal sequence that a device in the field would do.
+When retail sensors are being deployed, a device is registered, batteries put in, it joins and gets on with sending data for the next few years. For development purposes however we need to turn off one of the security settings so that you can join & uplink out of the normal sequence that a device in the field would do.
+
+Click on General Settings, scroll down to Join settings, click the Expand button, scroll down and click the 'Resets join nonces' option. You will see a warning about replay attacks which is entirely proper & correct. If anyone eavesdropping in your area on your LoRa transmissions could fake a join and send uplinks from their device but only if they happened to find out your AppKey & NwkKey which is kept securely on the TTN servers and is never transmitted over the air, so they'd also have to login to your account, which is protected by your password. 
 
 You then need to copy over the device details in to the config file for RadioLib. There are buttons to copy items to the clipboard so you don't have to hand type them.
 
@@ -88,7 +91,7 @@ The main menu for a device is the horizontal band: Overview, Live Data, Messagin
 
 ### Explore
 
-Nothing on the console can be upset unless you confirm a warning message, so you are safe to explore the different menus to orientate yourself. This is very good idea so you are have an understanding of the layout of the land and shouldn't take more than 10 or 15 minutes. The documentation & volunteers on GitHub and the TTN forum will make refer to parts of the console without giving blow by blow directions.
+Nothing on the console can be upset unless you confirm a warning message, so you are safe to explore the different menus to orientate yourself. This is very good idea so you have an understanding of the layout of the land and shouldn't take more than 10 or 15 minutes. The documentation & volunteers on GitHub and the TTN forum will make refer to parts of the console without giving blow by blow directions.
 
 
 
@@ -99,22 +102,22 @@ Nothing on the console can be upset unless you confirm a warning message, so you
 
 LoRaWAN devices typically send small amounts of data at intervals between 15 minutes through to once per day. This allows a device to run on two AA batteries for 2 to 5 years. Hoping that LoRaWAN can move lots of data and your device can regularly receive commands to do something on demand is trying to bend the LoRaWAN system in ways it is not designed for and usually ends up with far too many issues to unravel.
 
-The radio frequencies that are used are usually shared with other Industrial, Scientific & Medical, known as ISM, users. The LoRa modulation is particularly resistance to interference due to other simultaneous transmissions on the same frequency but too much local activity will mean that not all uplinks get through. The Things Industries suggest designing a system to a potential packet loss rate of 10%. Typically we see 1 or 2% loss. This is entirely down to shared use of the radio waves, once an uplink is heard by a gateway the system is super reliable through The Things Stack.
+The radio frequencies that are used are usually shared with other Industrial, Scientific & Medical, known as ISM, users. The LoRa modulation is particularly resistant to interference due to other simultaneous transmissions on the same frequency but too much local activity will mean that not all uplinks get through. The Things Industries suggest designing a system to a potential packet loss rate of 10%. Typically we see 1 or 2% loss. This is entirely down to shared use of the radio waves, once an uplink is heard by a gateway the system is super reliable through The Things Stack.
 
 To ensure that the shared ISM bands are fairly used there are limits defined in law on how often you can transmit, called Duty Cycle. The details vary by region or country but typically you can only transmit for 1% of the time. Some frequencies you can only use 0.1% of the time. See https://www.thethingsnetwork.org/docs/lorawan/duty-cycle/ for more information.
 
-Additionally, as The Things Stack Sandbox aka TTN is an array of servers in three locations around the world paid for by The Things Industries, there is a Fair Use Policy so that those learning LoRaWAN, communities, hobbyists & makers are guided on how much of the resource any one device can use. In short, it's 30 seconds of airtime a day and 10 downlinks. When a gateway is transmitting a downlink it can not hear any uplinks (contributing to the potential uplink loss outlined above). The community concensus is that 1 downlink a fortnight to update or adjust settings is appropriate. See https://www.thethingsnetwork.org/docs/lorawan/duty-cycle/#fair-use-policy for more information.
+Additionally, as The Things Stack Sandbox aka TTN is an array of servers in three locations around the world paid for by The Things Industries, there is a Fair Use Policy so that those learning LoRaWAN, communities, hobbyists & makers are guided on how much of the resource any one device can use. In short, it's 30 seconds of airtime a day and 10 downlinks. When a gateway is transmitting a downlink it can not hear any uplinks (contributing to the potential uplink loss outlined above). The community consensus is that 1 downlink a fortnight to update or adjust settings is appropriate. See https://www.thethingsnetwork.org/docs/lorawan/duty-cycle/#fair-use-policy for more information.
 
-You can see what intervals can be used with this interactive calculator: https://avbentem.github.io/airtime-calculator/ttn/. Devices further away from gateways will have to use a higher Spread Factor to be heard - do not assume everything will happen at SF7. A uplink takes a minimum of 6 seconds from start to end, sometimes longer if the device is further away from the gateway, so 
+You can see what intervals can be used with this interactive calculator: https://avbentem.github.io/airtime-calculator/ttn/. Devices further away from gateways will have to use a higher Spread Factor to be heard - do not assume everything will happen at SF7. An uplink takes a minimum of 6 seconds from start to end, sometimes longer if the device is further away from the gateway, so you will need to be patient for just a short while whilst waiting for feedback after seeing "Sending uplink"
 
-With all thes considerations, trying to use LoRaWAN for command & control isn't appropriate and realtime GPS tracking almost always breaches FUP and usually legal limits, leaving aside the challenges of coverage.
+With all these considerations, trying to use LoRaWAN for command & control isn't appropriate and realtime GPS tracking almost always breaches FUP and usually legal limits, leaving aside the challenges of coverage.
 
 See the hints & tips section on testing your device.
 
 
 ### EUI's & Keys
 
-In the config.h towards the top there are four lines thus:
+In the `config.h` towards the top there are four lines thus:
 
 // replace-with-your-device-id
 uint64_t joinEUI =   0x0000000000000000;
@@ -139,29 +142,12 @@ If you are using US915 or AU915 then you should change the subBand const to 2.
 
 ### The pinmap
 
-This is the connections between the MCU (ESP32/ATmega/SAMD) and the LoRa radio (SX1276/SX1262).
+This is the connection between your microcontroller (ESP32, ATmega, SAMD etc.) and the radio (SX1276, SX1262, LR1110 etc.).
+You have to select the correct module and set the correct pins.
 
-Prebuilt modules are easy - we can detect the board and setup the pinmap for you. These boards are:
+Pin maps for commonly used radio modules are kept in a separate library, called RadioBoards: https://github.com/radiolib-org/RadioBoards
 
-* TTGO_LoRa32
-* TTGO_LoRa32_V1
-* TTGO_LORA32_V2
-* TTGO_LORA32_v21NEW
-* HELTEC_WIFI_LORA_32
-* HELTEC_WIFI_LORA_32_V2
-* HELTEC_WIFI_LORA_32_V3
-* CUBECELL_BOARD
-
-If you have a TTGO T-Beam, you must choose the correct radio from the Board Revision sub-menu found under the main Tools menu.
-
-* TBEAM_USE_RADIO_SX1262
-* TBEAM_USE_RADIO_SX1276
-
-If you have an Adafruit Feather M0 with RFM95 then you must solder a wire or use a jumper to link from pin 6 to io1: https://learn.adafruit.com/the-things-network-for-feather/arduino-wiring
-
-
-If you have a module that's not on this list, please go to the "Pinmap How-To" below.
-
+It can automatically detect your microcontroller platform and radio, and configure things for you. If you have a board that is not supported by RadioBoards, feel free to suggest it in the RadioBoards issues, or better yet - open a pull request there!
 
 
 ## Observations on the main sketch
@@ -193,7 +179,3 @@ Coming soon
 ### Device testing
 
 The LoRaWAN code base works to a specification and once you are happy your device is able to join & send a few dozen uplinks, continuing to sit around waiting for an uplink to test your sensor code & payload format is a waste of your time. The solution is to write everything else in a different sketch, output the array to the serial console and then you can copy & paste the hex array in to the TTN console Payload Formatters section to test the decoding.
-
-
-## Pinmap How-To
-
